@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>20-20-20 Rule Timer</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            user-select: none;
+            background-color: #121212;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #main-timer {
+            font-size: 20em;
+            color: red;
+            text-align: center;
+        }
+        #main-timer.ready {
+            color: gray;
+            font-size: 15em;
+        }
+        #meal-timer {
+            position: absolute;
+            top: 0;
+            right:0;
+            font-size: 3em;
+            color: white;
+            border: 2px solid white;
+            padding: 10px;
+            margin-top: 0px;
+            text-align: center;
+        }
+		#pause-button {
+            background-color: #1E88E5;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+		#pause-button:hover {
+            background-color: #1565C0;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-timer">0</div>
+    <div id="meal-timer">20:00</div>
+	<button id="pause-button">Continue</button>
+
+    <script>
+        let intervalIDMain;
+		let intervalIDMeal;
+		let paused = true;
+        let mainTimerElement = document.getElementById('main-timer');
+        let mealTimerElement = document.getElementById('meal-timer');
+		let pauseButton = document.getElementById('pause-button');
+
+        let mainTimer = 0;
+        let mealTimer = 20 * 60; // 20 minutes in seconds
+
+        function updateMainTimer() {
+            mainTimer++;
+            mainTimerElement.textContent = mainTimer;
+            if (mainTimer > 20) {
+                mainTimerElement.classList.add('ready');
+            } else {
+                mainTimerElement.classList.remove('ready');
+            }
+        }
+		
+		function updateMealTimer() {
+			if (mealTimer > 0) {
+                mealTimer--;
+                let minutes = Math.floor(mealTimer / 60);
+                let seconds = mealTimer % 60;
+                mealTimerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                if (mealTimer === 0) {
+                    mealTimerElement.style.color = 'gray';
+                }
+            }
+		}
+
+        function resetMainTimer() {
+			if(!paused) {
+				mainTimer = 0;
+				mainTimerElement.textContent = mainTimer;
+				mainTimerElement.classList.remove('ready');
+				clearInterval(intervalIDMain);
+				intervalIDMain = setInterval(updateMainTimer, 1000);
+			}
+        }
+		
+		function togglePause() {
+            paused = !paused;
+            if (paused) {
+				clearInterval(intervalIDMain)
+				clearInterval(intervalIDMeal)
+                pauseButton.textContent = 'Continue';
+            } else {
+				intervalIDMain = setInterval(updateMainTimer, 1000)
+				intervalIDMeal = setInterval(updateMealTimer, 1000)
+                pauseButton.textContent = 'Pause';
+            }
+        }
+
+        document.body.addEventListener('click', resetMainTimer);
+		pauseButton.addEventListener('click', (event) => {
+            togglePause();
+			event.stopPropagation(); // Prevent resetting the timer when the button is clicked
+        });
+    </script>
+</body>
+</html>
