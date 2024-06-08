@@ -30,13 +30,17 @@
         #meal-timer {
             position: absolute;
             top: 0;
-            right:0;
+            right: 0;
             font-size: 3em;
             color: white;
             border: 2px solid white;
             padding: 10px;
             margin-top: 0px;
             text-align: center;
+        }
+        #meal-timer.finished {
+            color: gray;
+            font-size: 2em;
         }
 		button {
             background-color: #1E88E5;
@@ -71,8 +75,9 @@
         let mainTimer;
         let mealTimer = localStorage.getItem("meal-timer")
 
-        if(!mealTimer || mealTimer == 0) {
-            mealTimer = 20 * 60;
+        // if the timer has finished
+        if(mealTimer) {
+            mealTimer = 20 * 60; // 20 minutes
             mainTimer = 0;
         } else {
             mainTimer = localStorage.getItem("main-timer") ?? 0;
@@ -85,9 +90,15 @@
         }
 
         function mealTimerLoop() {
-            mealTimer--;
+            if(!mealTimerElement.classList.contains('finished')) {
+                // until the timer finishes, decrement, afterwards increment to show the time passed
+                mealTimer--;
+                localStorage.setItem("meal-timer", mealTimer);
+            } else {
+                mealTimer++;
+                localStorage.removeItem("meal-timer") // indicate that the timer has finished
+            }
             updateMealTimerElement();
-            localStorage.setItem("meal-timer", mealTimer);
         }
 
         function updateMainTimerElement() {
@@ -104,28 +115,29 @@
             let seconds = mealTimer % 60;
             mealTimerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             if (mealTimer === 0) {
-                mealTimerElement.style.color = 'gray';
+                mealTimerElement.classList.add('finished')
             }
-
 		}
 
         function resetMainTimer() {
 			if(!paused) {
 				mainTimer = 0;
-				mainTimerElement.textContent = mainTimer;
-				mainTimerElement.classList.remove('ready');
-				clearInterval(intervalIDMain);
+				updateMainTimerElement();
+
+                // completely restart the timer
+				clearInterval(intervalIDMain); 
 				intervalIDMain = setInterval(mainTimerLoop, 1000);
 			}
         }
 		
 		function togglePause() {
             paused = !paused;
+
             if (paused) {
-				clearInterval(intervalIDMain)
-				clearInterval(intervalIDMeal)
+				clearInterval(intervalIDMain);
+				clearInterval(intervalIDMeal);
                 pauseButton.textContent = 'Continue';
-                resetButton.style.visibility = 'visible'; // show the button when the timer is paused
+                resetButton.style.visibility = 'visible';
             } else {
 				intervalIDMain = setInterval(mainTimerLoop, 1000)
 				intervalIDMeal = setInterval(mealTimerLoop, 1000)
@@ -139,6 +151,7 @@
             mealTimer = 20 * 60;
             updateMainTimerElement();
             updateMealTimerElement();
+            mealTimerElement.classList.remove('finished'); // reset meal timer status
             localStorage.setItem("main-timer", mainTimer);
             localStorage.setItem("meal-timer", mealTimer);
         }
