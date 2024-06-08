@@ -38,7 +38,7 @@
             margin-top: 0px;
             text-align: center;
         }
-		#pause-button {
+		button {
             background-color: #1E88E5;
             color: white;
             border: none;
@@ -48,29 +48,49 @@
             font-size: 1em;
             cursor: pointer;
         }
-		#pause-button:hover {
+		button:hover {
             background-color: #1565C0;
         }
     </style>
 </head>
 <body>
-    <div id="main-timer">0</div>
-    <div id="meal-timer">20:00</div>
+    <div id="main-timer"></div>
+    <div id="meal-timer"></div>
 	<button id="pause-button">Continue</button>
+	<button id="reset-button">Reset all</button>
 
     <script>
         let intervalIDMain;
 		let intervalIDMeal;
 		let paused = true;
-        let mainTimerElement = document.getElementById('main-timer');
-        let mealTimerElement = document.getElementById('meal-timer');
-		let pauseButton = document.getElementById('pause-button');
+        const mainTimerElement = document.getElementById('main-timer');
+        const mealTimerElement = document.getElementById('meal-timer');
+		const pauseButton = document.getElementById('pause-button');
+		const resetButton = document.getElementById('reset-button');
 
-        let mainTimer = 0;
-        let mealTimer = 20 * 60; // 20 minutes in seconds
+        let mainTimer;
+        let mealTimer = localStorage.getItem("meal-timer")
 
-        function updateMainTimer() {
+        if(!mealTimer || mealTimer == 0) {
+            mealTimer = 20 * 60;
+            mainTimer = 0;
+        } else {
+            mainTimer = localStorage.getItem("main-timer") ?? 0;
+        }
+
+        function mainTimerLoop() {
             mainTimer++;
+            updateMainTimerElement();
+            localStorage.setItem("main-timer", mainTimer);
+        }
+
+        function mealTimerLoop() {
+            mealTimer--;
+            updateMealTimerElement();
+            localStorage.setItem("meal-timer", mealTimer);
+        }
+
+        function updateMainTimerElement() {
             mainTimerElement.textContent = mainTimer;
             if (mainTimer > 20) {
                 mainTimerElement.classList.add('ready');
@@ -79,16 +99,14 @@
             }
         }
 		
-		function updateMealTimer() {
-			if (mealTimer > 0) {
-				mealTimer--;
-				let minutes = Math.floor(mealTimer / 60);
-				let seconds = mealTimer % 60;
-				mealTimerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-				if (mealTimer === 0) {
-				    mealTimerElement.style.color = 'gray';
-				}
-			}
+		function updateMealTimerElement() {
+            let minutes = Math.floor(mealTimer / 60);
+            let seconds = mealTimer % 60;
+            mealTimerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            if (mealTimer === 0) {
+                mealTimerElement.style.color = 'gray';
+            }
+
 		}
 
         function resetMainTimer() {
@@ -97,7 +115,7 @@
 				mainTimerElement.textContent = mainTimer;
 				mainTimerElement.classList.remove('ready');
 				clearInterval(intervalIDMain);
-				intervalIDMain = setInterval(updateMainTimer, 1000);
+				intervalIDMain = setInterval(mainTimerLoop, 1000);
 			}
         }
 		
@@ -107,18 +125,37 @@
 				clearInterval(intervalIDMain)
 				clearInterval(intervalIDMeal)
                 pauseButton.textContent = 'Continue';
+                resetButton.style.visibility = 'visible'; // show the button when the timer is paused
             } else {
-				intervalIDMain = setInterval(updateMainTimer, 1000)
-				intervalIDMeal = setInterval(updateMealTimer, 1000)
+				intervalIDMain = setInterval(mainTimerLoop, 1000)
+				intervalIDMeal = setInterval(mealTimerLoop, 1000)
                 pauseButton.textContent = 'Pause';
+                resetButton.style.visibility = 'hidden'; // hide the button when the timer is running
             }
         }
+
+        function resetAll() {
+            mainTimer = 0;
+            mealTimer = 20 * 60;
+            updateMainTimerElement();
+            updateMealTimerElement();
+            localStorage.setItem("main-timer", mainTimer);
+            localStorage.setItem("meal-timer", mealTimer);
+        }
+
+        updateMainTimerElement();
+        updateMealTimerElement();
 
         document.body.addEventListener('click', resetMainTimer);
 		pauseButton.addEventListener('click', (event) => {
             togglePause();
 			event.stopPropagation(); // Prevent resetting the timer when the button is clicked
         });
+        resetButton.addEventListener('click', (event) => {
+            resetAll();
+			event.stopPropagation(); // Prevent resetting the timer when the button is clicked
+        });
+        
     </script>
 </body>
 </html>
